@@ -11,7 +11,7 @@ def main() -> None:
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo-0613",
         messages=messages,
-        # request_timeout=20,
+        request_timeout=2,
     )
     content = response.choices[0].message.content
     print(content)
