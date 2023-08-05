@@ -1,3 +1,7 @@
+.DS_Store
+*.parquet.gz
+*.gz.parquet
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
