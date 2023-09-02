@@ -11,9 +11,10 @@ def main() -> None:
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo-0613",
         messages=[
-            {'role': 'user', 'content': 'Hello?'}
+            {'role': 'user', 'content': 'Tell me about the Japanese history.'}
         ],
-        stream=True
+        stream=True,
+        request_timeout=3,
     )
 
     collected_chunks = []
