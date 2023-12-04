@@ -1,4 +1,5 @@
 import os
+import json
 from openai import OpenAI
 
 
@@ -33,7 +34,8 @@ def parse_address(address: str, client: OpenAI) -> dict:
         ],
     )
 
-    return response.choices[0].message.content
+    content = response.choices[0].message.content
+    return json.loads(content)
 
 
 def main() -> None:
