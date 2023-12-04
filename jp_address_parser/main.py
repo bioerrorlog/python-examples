@@ -6,6 +6,7 @@ def parse_address(address: str, client: OpenAI) -> dict:
     system_prompt = """日本の住所を以下の項目に沿ってJSON形式で正確にパースし、JSONのみを出力すること:
 
 # 項目
+- original_data
 - 都道府県
 - 郡名
 - 市区町村
@@ -20,6 +21,7 @@ def parse_address(address: str, client: OpenAI) -> dict:
 - ハイフンを残さないこと
 - 固有名詞に含まれない漢数字は半角数字に置換すること
 - ない場合は空欄にすること
+- `original_data`には、パース前の元住所を入れること
 """
 
     response = client.chat.completions.create(
