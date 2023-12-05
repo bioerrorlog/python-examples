@@ -25,11 +25,16 @@ def parse_address(address: str, client: OpenAI) -> dict:
 - `original_data`には、パース前の元住所を入れること
 """
 
+    shot1_user = '港区赤坂1-2-3'
+    shot1_assistant = str({"original_data": "港区赤坂1-2-3", "都道府県": "東京都", "郡名": "", "市区町村": "港区", "町域": "赤坂", "丁目": "1", "番地": "2", "号": "3", "建物名・部屋番号": ""})
+
     response = client.chat.completions.create(
         model="gpt-3.5-turbo-1106",
         response_format={"type": "json_object"},
         messages=[
             {'role': 'system', 'content': system_prompt},
+            {'role': 'user', 'content': shot1_user},
+            {'role': 'assistant', 'content': shot1_assistant},
             {'role': 'user', 'content': address},
         ],
     )
