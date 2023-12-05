@@ -32,6 +32,13 @@ def openai_client():
         "号": "3",
         "建物名・部屋番号": ""
     }),
+])
+def test_parse_address_in_easy_cases(address, expected, openai_client):
+    result = parse_address(address, openai_client)
+    assert result == expected
+
+
+@pytest.mark.parametrize("address, expected", [
     ('浦安市舞浜2-1-1', {
         "original_data": "浦安市舞浜2-1-1",
         "都道府県": "千葉県",
@@ -65,7 +72,29 @@ def openai_client():
         "号": "26",
         "建物名・部屋番号": ""
     }),
+    ('春日部市大字八丁目３５３番地１', {
+        "original_data": "春日部市大字八丁目３５３番地１",
+        "都道府県": "埼玉県",
+        "郡名": "",
+        "市区町村": "春日部市",
+        "町域": "大字八丁目",
+        "丁目": "",
+        "番地": "353",
+        "号": "1",
+        "建物名・部屋番号": ""
+    }),
+    ('奈良県御所市1番地の3', {
+        "original_data": "奈良県御所市1番地の3",
+        "都道府県": "奈良県",
+        "郡名": "",
+        "市区町村": "御所市",
+        "町域": "",
+        "丁目": "",
+        "番地": "1",
+        "号": "3",
+        "建物名・部屋番号": ""
+    }),
 ])
-def test_parse_address(address, expected, openai_client):
+def test_parse_address_in_difficult_cases(address, expected, openai_client):
     result = parse_address(address, openai_client)
     assert result == expected
