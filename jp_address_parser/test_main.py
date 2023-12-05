@@ -4,6 +4,11 @@ import pytest
 from main import parse_address
 
 
+@pytest.fixture
+def openai_client():
+    return OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+
+
 @pytest.mark.parametrize("address, expected", [
     ('港区赤坂一丁目2の3', {
         "original_data": "港区赤坂一丁目2の3",
@@ -17,10 +22,6 @@ from main import parse_address
         "建物名・部屋番号": ""
     }),
 ])
-def test_parse_address(address, expected):
-    client = OpenAI(
-        api_key=os.environ.get("OPENAI_API_KEY"),
-    )
-
-    result = parse_address(address, client)
+def test_parse_address(address, expected, openai_client):
+    result = parse_address(address, openai_client)
     assert result == expected
