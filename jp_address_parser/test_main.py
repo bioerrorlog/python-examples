@@ -1,6 +1,7 @@
 import os
-from openai import OpenAI
 import pytest
+from openai import OpenAI
+
 from main import parse_address
 
 
