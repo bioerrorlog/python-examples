@@ -25,8 +25,11 @@ def parse_address(address: str, client: OpenAI) -> dict:
 - `original_data`には、パース前の元住所を入れること
 """
 
-    shot1_user = '港区赤坂1-2-3'
-    shot1_assistant = str({"original_data": "港区赤坂1-2-3", "都道府県": "東京都", "郡名": "", "市区町村": "港区", "町域": "赤坂", "丁目": "1", "番地": "2", "号": "3", "建物名・部屋番号": ""})
+    shot1_user = '浦安市舞浜2-11'
+    shot1_assistant = str({"original_data": "浦安市舞浜2-11", "都道府県": "千葉県", "郡名": "", "市区町村": "浦安市", "町域": "舞浜", "丁目": "", "番地": "2", "号": "11", "建物名・部屋番号": ""})
+
+    shot2_user = '港区赤坂1-2-3'
+    shot2_assistant = str({"original_data": "港区赤坂1-2-3", "都道府県": "東京都", "郡名": "", "市区町村": "港区", "町域": "赤坂", "丁目": "1", "番地": "2", "号": "3", "建物名・部屋番号": ""})
 
     response = client.chat.completions.create(
         model="gpt-3.5-turbo-1106",
@@ -35,6 +38,8 @@ def parse_address(address: str, client: OpenAI) -> dict:
             {'role': 'system', 'content': system_prompt},
             {'role': 'user', 'content': shot1_user},
             {'role': 'assistant', 'content': shot1_assistant},
+            {'role': 'user', 'content': shot2_user},
+            {'role': 'assistant', 'content': shot2_assistant},
             {'role': 'user', 'content': address},
         ],
     )

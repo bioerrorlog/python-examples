@@ -43,6 +43,17 @@ def openai_client():
         "号": "1",
         "建物名・部屋番号": ""
     }),
+    ('浦安市舞浜2-11', {
+        "original_data": "浦安市舞浜2-11",
+        "都道府県": "千葉県",
+        "郡名": "",
+        "市区町村": "浦安市",
+        "町域": "舞浜",
+        "丁目": "",
+        "番地": "2",
+        "号": "11",
+        "建物名・部屋番号": ""
+    }),
 ])
 def test_parse_address(address, expected, openai_client):
     result = parse_address(address, openai_client)
