@@ -54,6 +54,17 @@ def openai_client():
         "号": "11",
         "建物名・部屋番号": ""
     }),
+    ('浦静岡県下田市2-4-26', {
+        "original_data": "浦静岡県下田市2-4-26",
+        "都道府県": "静岡県",
+        "郡名": "",
+        "市区町村": "下田市",
+        "町域": "",
+        "丁目": "2",
+        "番地": "4",
+        "号": "26",
+        "建物名・部屋番号": ""
+    }),
 ])
 def test_parse_address(address, expected, openai_client):
     result = parse_address(address, openai_client)
