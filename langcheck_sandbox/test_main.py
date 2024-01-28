@@ -2,19 +2,23 @@ from langcheck.metrics.ja.reference_based_text_quality import semantic_similarit
 
 # Dummy outputs
 generated_outputs = [
-    'Black cat the',
-    'The black cat is.',
-    'The black cat is sitting',
-    'The big black cat is sitting on the fence',
-    'Usually, the big black cat is sitting on the old wooden fence.',
+    'メロスは激怒した。',
+    'メロスは激しく怒った。',
+    'メロスは、激しく、怒った。',
+    'セリヌンティウスは待っていた。',
+    '単語のベクトル表現は、1960年代における情報検索用のベクトル空間モデルを元に開発された。潜在的意味分析は、特異値分解で次元数を削減することで、1980年代後半に導入された。',
+    '1960年以前に、ベクトル表現は開発された。のちに次元数を増幅することにより、潜在分析が導入された。',
+    'すみません、ITヘルプデスクに電話で問い合わせてください。',
 ]
 
 reference_outputs = [
-    'Black cat the',
-    'The black cat is.',
-    'The black cat is sitting',
-    'The big black cat is sitting on the fence',
-    'Usually, the big black cat is sitting on the old wooden fence.',
+    'メロスは激怒した。',
+    'メロスは激怒した。',
+    'メロスは激しく怒った',
+    'メロスは激怒した。',
+    '単語をベクトルとして表現する手法は、1960年代における情報検索用のベクトル空間モデルの開発が元になっている。特異値分解を使用して次元数を削減することにより、1980年代後半に潜在的意味分析が導入された。',
+    '単語をベクトルとして表現する手法は、1960年代における情報検索用のベクトル空間モデルの開発が元になっている。特異値分解を使用して次元数を削減することにより、1980年代後半に潜在的意味分析が導入された。',
+    '大変申し訳ございませんが、弊社情報部門のヘルプデスクにメールでお問い合わせください。',
 ]
 
 
