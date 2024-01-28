@@ -22,6 +22,14 @@ reference_outputs = [
 ]
 
 
+# Prerequisite: Set OPENAI_API_KEY as an environment variable
+def test_semantic_similarity_by_openai():
+    results = semantic_similarity(generated_outputs, reference_outputs, model_type='openai')
+    print(results)
+
+    assert results > 0.9
+
+
 def test_semantic_similarity():
     results = semantic_similarity(generated_outputs, reference_outputs)
     print(results)
