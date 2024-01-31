@@ -4,7 +4,7 @@ Code examples for [LangCheck](https://github.com/citadel-ai/langcheck)
 
 ## Test results: semantic_similarity()
 
-|LLM answer (dummy)|Reference|Similarity (Local: paraphrase-multilingual-mpnet-base-v2)|Similarity (text-embedding-ada-002)|Similarity (text-embedding-3-small)|
+|LLM answer (dummy)|Reference|Similarity (Local: paraphrase-multilingual-mpnet-base-v2)|Similarity (OpenAI: text-embedding-ada-002)|Similarity (OpenAI: text-embedding-3-small)|
 | -- | -- | -- | -- | -- |
 |メロスは激怒した。| メロスは激怒した。|1.000000| 1.000000|1.000000|
 |メロスは激しく怒った。| メロスは激怒した。|0.980329| 0.990486|0.965431|
