@@ -23,14 +23,32 @@ reference_outputs = [
 
 
 # Prerequisite: Set OPENAI_API_KEY as an environment variable
-def test_semantic_similarity_by_openai():
-    results = semantic_similarity(generated_outputs, reference_outputs, model_type='openai')
+def test_semantic_similarity_by_openai_ada_v2():
+    results = semantic_similarity(
+        generated_outputs,
+        reference_outputs,
+        model_type='openai',
+        openai_args={'model': 'text-embedding-ada-002'}
+    )
     print(results)
 
     assert results > 0.9
 
 
-def test_semantic_similarity():
+# Prerequisite: Set OPENAI_API_KEY as an environment variable
+def test_semantic_similarity_by_openai_3_small():
+    results = semantic_similarity(
+        generated_outputs,
+        reference_outputs,
+        model_type='openai',
+        openai_args={'model': 'text-embedding-3-small'}
+    )
+    print(results)
+
+    assert results > 0.9
+
+
+def test_semantic_similarity_local():
     results = semantic_similarity(generated_outputs, reference_outputs)
     print(results)
 
