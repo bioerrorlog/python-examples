@@ -10,5 +10,6 @@ def main() -> None:
     print(X)
     print(X.dtype)
 
+
 if __name__ == "__main__":
     main()
