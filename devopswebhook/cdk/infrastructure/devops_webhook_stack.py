@@ -6,7 +6,7 @@ from aws_cdk import (
 )
 from constructs import Construct
 
-class CdkStack(Stack):
+class DevOpsWebhookStack(Stack):
 
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
@@ -32,7 +32,7 @@ class CdkStack(Stack):
         devops_webhook_lambda = aws_lambda.Function(
             self, "DevOpsWebhookLambda",
             runtime=aws_lambda.Runtime.PYTHON_3_12,
-            handler="simple.lambda_handler",
+            handler="webhook_trigger.lambda_handler",
             code=aws_lambda.Code.from_asset("lambda"),
             timeout=Duration.seconds(30),
             memory_size=256,
