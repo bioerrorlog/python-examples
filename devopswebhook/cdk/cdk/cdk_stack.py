@@ -11,6 +11,23 @@ class CdkStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
+        # SSMパラメータの作成
+        webhook_url_param = aws_ssm.StringParameter(
+            self, "WebhookUrlParameter",
+            parameter_name="/devops-agent/webhook-url",
+            string_value="https://your-webhook-url.example.com",
+            description="DevOps Agent Webhook URL",
+            tier=aws_ssm.ParameterTier.STANDARD,
+        )
+
+        webhook_secret_param = aws_ssm.StringParameter(
+            self, "WebhookSecretParameter",
+            parameter_name="/devops-agent/webhook-secret",
+            string_value="your-webhook-secret-here",
+            description="DevOps Agent Webhook Secret",
+            tier=aws_ssm.ParameterTier.STANDARD,
+        )
+
         # Lambda関数の作成
         devops_webhook_lambda = aws_lambda.Function(
             self, "DevOpsWebhookLambda",
@@ -20,18 +37,8 @@ class CdkStack(Stack):
             timeout=Duration.seconds(30),
             memory_size=256,
             environment={
-                # 環境変数はSSM Parameter Storeから取得することを推奨
-                # デプロイ前に以下のパラメータをSSMに作成してください:
-                # - /devops-agent/webhook-url
-                # - /devops-agent/webhook-secret
-                "DEVOPS_AGENT_WEBHOOK_URL": aws_ssm.StringParameter.from_string_parameter_name(
-                    self, "WebhookUrl",
-                    string_parameter_name="/devops-agent/webhook-url"
-                ).string_value,
-                "DEVOPS_AGENT_WEBHOOK_SECRET": aws_ssm.StringParameter.from_string_parameter_name(
-                    self, "WebhookSecret",
-                    string_parameter_name="/devops-agent/webhook-secret"
-                ).string_value,
+                "DEVOPS_AGENT_WEBHOOK_URL": webhook_url_param.string_value,
+                "DEVOPS_AGENT_WEBHOOK_SECRET": webhook_secret_param.string_value,
             },
             description="Lambda function to trigger DevOps Agent webhook",
         )
