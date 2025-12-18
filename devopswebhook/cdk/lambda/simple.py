@@ -3,15 +3,13 @@ import hmac
 import hashlib
 import base64
 from datetime import datetime
-import urllib3
+import urllib.request
+import urllib.error
 import os
 
 # 環境変数から設定を取得
 WEBHOOK_URL = os.environ.get('DEVOPS_AGENT_WEBHOOK_URL')
 WEBHOOK_SECRET = os.environ.get('DEVOPS_AGENT_WEBHOOK_SECRET')
-
-# HTTP接続用
-http = urllib3.PoolManager()
 
 
 def lambda_handler(event, context):
@@ -106,21 +104,41 @@ def trigger_devops_agent(incident_data):
     print(f"Sending request to: {WEBHOOK_URL}")
     print(f"Payload: {payload}")
 
-    response = http.request(
-        'POST',
-        WEBHOOK_URL,
-        body=payload,
-        headers=headers
-    )
+    try:
+        # urllib.requestを使用してPOSTリクエストを送信
+        req = urllib.request.Request(
+            WEBHOOK_URL,
+            data=payload.encode('utf-8'),
+            headers=headers,
+            method='POST'
+        )
 
-    # レスポンスをログ出力
-    print(f"Response status: {response.status}")
-    print(f"Response body: {response.data.decode('utf-8')}")
+        with urllib.request.urlopen(req) as response:
+            response_body = response.read().decode('utf-8')
+            response_status = response.status
 
-    return {
-        'statusCode': response.status,
-        'body': response.data.decode('utf-8')
-    }
+            # レスポンスをログ出力
+            print(f"Response status: {response_status}")
+            print(f"Response body: {response_body}")
+
+            return {
+                'statusCode': response_status,
+                'body': response_body
+            }
+
+    except urllib.error.HTTPError as e:
+        # HTTPエラー（4xx, 5xxなど）
+        error_body = e.read().decode('utf-8')
+        print(f"HTTP Error {e.code}: {error_body}")
+        return {
+            'statusCode': e.code,
+            'body': error_body
+        }
+
+    except urllib.error.URLError as e:
+        # URL/ネットワークエラー
+        print(f"URL Error: {str(e.reason)}")
+        raise Exception(f"Failed to connect to webhook: {str(e.reason)}")
 
 
 # ローカルテスト用
