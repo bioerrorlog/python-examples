@@ -1,0 +1,8 @@
+[project]
+name = "app"
+version = "0.1.0"
+description = "FastAPI server running on GCP"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi[standard]>=0.141.1",
+]
