@@ -1,0 +1,10 @@
+project_id = "your-gcp-project-id"
+region     = "asia-northeast1"
+
+# IAP でアクセスを許可する Google アカウント
+iap_members = [
+  "user:you@gmail.com",
+]
+
+# ビルドしたイメージのタグ（コミットハッシュなどを指定してもよい）
+# image_tag = "latest"
