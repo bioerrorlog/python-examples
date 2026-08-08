@@ -1,10 +1,10 @@
 project_id = "your-gcp-project-id"
 region     = "asia-northeast1"
 
-# IAP でアクセスを許可する Google アカウント
+# Google accounts allowed to access the app through IAP
 iap_members = [
   "user:you@gmail.com",
 ]
 
-# ビルドしたイメージのタグ（コミットハッシュなどを指定してもよい）
+# Tag of the image to deploy (a commit hash works too)
 # image_tag = "latest"

@@ -1,47 +1,47 @@
 variable "project_id" {
-  description = "デプロイ先の Google Cloud プロジェクト ID"
+  description = "Google Cloud project to deploy into"
   type        = string
 }
 
 variable "region" {
-  description = "Cloud Run / Artifact Registry のリージョン"
+  description = "Region for Cloud Run and Artifact Registry"
   type        = string
   default     = "asia-northeast1"
 }
 
 variable "service_name" {
-  description = "Cloud Run サービス名（Artifact Registry のイメージ名にも使う）"
+  description = "Cloud Run service name, also used as the container image name"
   type        = string
   default     = "fastapi-gcp"
 }
 
 variable "repository_id" {
-  description = "Artifact Registry の Docker リポジトリ ID"
+  description = "Artifact Registry Docker repository ID"
   type        = string
   default     = "fastapi-gcp"
 }
 
 variable "image_tag" {
-  description = "デプロイするコンテナイメージのタグ"
+  description = "Tag of the container image to deploy"
   type        = string
   default     = "latest"
 }
 
 variable "iap_members" {
   description = <<-EOT
-    IAP 経由でアプリにアクセスできる IAM プリンシパル。
-    例: ["user:you@gmail.com", "group:dev@example.com", "domain:example.com"]
+    IAM principals allowed to reach the app through IAP.
+    Example: ["user:you@gmail.com", "group:dev@example.com", "domain:example.com"]
   EOT
   type        = list(string)
 
   validation {
     condition     = length(var.iap_members) > 0
-    error_message = "少なくとも 1 つのプリンシパルを指定してください。空の場合、誰もアプリにアクセスできません。"
+    error_message = "Specify at least one principal, otherwise nobody can access the app."
   }
 }
 
 variable "max_instance_count" {
-  description = "Cloud Run の最大インスタンス数"
+  description = "Maximum number of Cloud Run instances"
   type        = number
   default     = 3
 }
