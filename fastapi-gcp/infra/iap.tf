@@ -28,3 +28,27 @@ resource "google_cloud_run_v2_service_iam_member" "iap_accessor" {
   role     = "roles/iap.httpsResourceAccessor"
   member   = each.value
 }
+
+# Identity used to call the service programmatically.
+resource "google_service_account" "client" {
+  project      = var.project_id
+  account_id   = "${var.service_name}-client"
+  display_name = "Programmatic client for ${var.service_name}"
+}
+
+resource "google_cloud_run_v2_service_iam_member" "client_iap_accessor" {
+  project  = var.project_id
+  location = google_cloud_run_v2_service.app.location
+  name     = google_cloud_run_v2_service.app.name
+  role     = "roles/iap.httpsResourceAccessor"
+  member   = "serviceAccount:${google_service_account.client.email}"
+}
+
+# Principals allowed to impersonate the client service account and sign JWTs as it.
+resource "google_service_account_iam_member" "client_token_creator" {
+  for_each = toset(var.client_impersonators)
+
+  service_account_id = google_service_account.client.name
+  role               = "roles/iam.serviceAccountTokenCreator"
+  member             = each.value
+}

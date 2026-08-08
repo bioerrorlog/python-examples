@@ -6,5 +6,10 @@ iap_members = [
   "user:you@gmail.com",
 ]
 
+# Google accounts allowed to impersonate the client service account
+client_impersonators = [
+  "user:you@gmail.com",
+]
+
 # Tag of the image to deploy (a commit hash works too)
 # image_tag = "latest"

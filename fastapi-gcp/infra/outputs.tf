@@ -18,6 +18,11 @@ output "runtime_service_account" {
   value       = google_service_account.run.email
 }
 
+output "client_service_account" {
+  description = "Service account to impersonate when calling the service programmatically"
+  value       = google_service_account.client.email
+}
+
 output "iap_service_agent" {
   description = "IAP service agent that invokes the Cloud Run service"
   value       = google_project_service_identity.iap.email

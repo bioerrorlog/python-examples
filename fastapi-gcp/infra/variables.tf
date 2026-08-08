@@ -40,6 +40,16 @@ variable "iap_members" {
   }
 }
 
+variable "client_impersonators" {
+  description = <<-EOT
+    IAM principals allowed to impersonate the client service account, i.e. to call
+    the service programmatically from a local machine.
+    Example: ["user:you@gmail.com"]
+  EOT
+  type        = list(string)
+  default     = []
+}
+
 variable "max_instance_count" {
   description = "Maximum number of Cloud Run instances"
   type        = number

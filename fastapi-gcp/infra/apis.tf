@@ -4,6 +4,7 @@ locals {
     "artifactregistry.googleapis.com",
     "iap.googleapis.com",
     "cloudbuild.googleapis.com",
+    "iamcredentials.googleapis.com",
   ]
 }
 
