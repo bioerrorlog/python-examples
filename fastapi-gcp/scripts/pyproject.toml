@@ -1,0 +1,9 @@
+[project]
+name = "scripts"
+version = "0.1.0"
+description = "Utility scripts for calling the IAP-protected Cloud Run service"
+requires-python = ">=3.12"
+dependencies = [
+    "google-auth>=2.38.0",
+    "requests>=2.32.3",
+]
