@@ -7,7 +7,6 @@ with the local user's credentials, so no service account key is needed.
 """
 
 import json
-import os
 import time
 
 import google.auth
@@ -16,26 +15,12 @@ import requests
 from google.auth.transport.requests import AuthorizedSession
 
 
-@pytest.fixture(scope="session")
-def service_url() -> str:
-    """URL of the deployed service, from `terraform output -raw service_url`."""
-    url = os.environ.get("SERVICE_URL")
-    if not url:
-        pytest.skip("SERVICE_URL is not set")
-    return url.rstrip("/")
+SERVICE_URL = "https://fastapi-gcp-xxxxxxxxxx.asia-northeast1.run.app"
+SERVICE_ACCOUNT = "fastapi-gcp-client@your-gcp-project-id.iam.gserviceaccount.com"
 
 
 @pytest.fixture(scope="session")
-def service_account() -> str:
-    """Client service account, from `terraform output -raw client_service_account`."""
-    email = os.environ.get("SERVICE_ACCOUNT")
-    if not email:
-        pytest.skip("SERVICE_ACCOUNT is not set")
-    return email
-
-
-@pytest.fixture(scope="session")
-def signed_jwt(service_url: str, service_account: str) -> str:
+def signed_jwt() -> str:
     """Return a JWT signed as the client service account, valid for one hour.
 
     The local user's credentials (ADC) are used to call the IAM Credentials API,
@@ -49,14 +34,14 @@ def signed_jwt(service_url: str, service_account: str) -> str:
     )
     now = int(time.time())
     payload = {
-        "iss": service_account,
-        "sub": service_account,
-        "aud": service_url,
+        "iss": SERVICE_ACCOUNT,
+        "sub": SERVICE_ACCOUNT,
+        "aud": SERVICE_URL,
         "iat": now,
         "exp": now + 3600,
     }
     response = AuthorizedSession(credentials).post(
-        f"https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/{service_account}:signJwt",
+        f"https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/{SERVICE_ACCOUNT}:signJwt",
         json={"payload": json.dumps(payload)},
     )
     response.raise_for_status()
@@ -64,7 +49,7 @@ def signed_jwt(service_url: str, service_account: str) -> str:
 
 
 @pytest.fixture(scope="session")
-def call(service_url: str, signed_jwt: str):
+def call(signed_jwt: str):
     """Return a function that sends an authenticated request through IAP.
 
     IAP verifies the bearer token first and forwards the request to Cloud Run
@@ -74,7 +59,7 @@ def call(service_url: str, signed_jwt: str):
     def _call(method: str, path: str, body: dict | None = None) -> requests.Response:
         return requests.request(
             method,
-            f"{service_url}{path}",
+            f"{SERVICE_URL}{path}",
             headers={"Authorization": f"Bearer {signed_jwt}"},
             json=body,
             timeout=30,

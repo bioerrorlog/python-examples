@@ -1,6 +1,7 @@
 """End-to-end tests against the deployed service behind IAP."""
 
 import requests
+from conftest import SERVICE_URL
 
 
 def test_root(call):
@@ -21,6 +22,6 @@ def test_echo(call):
     assert response.json() == {"text": "hello"}
 
 
-def test_request_without_token_is_rejected(service_url):
-    response = requests.get(service_url, timeout=30)
+def test_request_without_token_is_rejected():
+    response = requests.get(SERVICE_URL, timeout=30)
     assert response.status_code in (401, 403)
