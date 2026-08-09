@@ -1,7 +1,8 @@
-"""Loads the results recorded by exe_api_calls/main.py.
+"""Loads the result files recorded by exe_api_calls/main.py.
 
-The e2e tests never call the service themselves; they only verify the file that
-the collection script wrote.
+The e2e tests never call the service themselves; they only verify the files that
+the collection script wrote, always taking the most recent run under
+exe_api_calls/results/.
 """
 
 import json
@@ -11,40 +12,47 @@ from typing import Callable
 import pytest
 
 
-RESULTS_PATH = Path(__file__).with_name("results.json")
-DATA_DIR = Path(__file__).parent / "exe_api_calls" / "data"
+EXE_DIR = Path(__file__).parent / "exe_api_calls"
+DATA_DIR = EXE_DIR / "data"
+RESULTS_DIR = EXE_DIR / "results"
 
 
 def case_names(endpoint: str) -> list[str]:
-    """Return the recorded case names for an endpoint, taken from its data files.
+    """Return an endpoint's case names, taken from its test data files.
 
-    Parametrising over the data directory rather than the results file keeps the
-    test list stable whether or not results have been collected yet.
+    Parametrising over the data directory rather than the results keeps the test
+    list stable whether or not a run has been collected yet.
     """
-    return sorted(f"{endpoint}/{path.stem}" for path in (DATA_DIR / endpoint).glob("*.json"))
+    return sorted(path.stem for path in (DATA_DIR / endpoint).glob("*.json"))
 
 
 @pytest.fixture(scope="session")
-def results() -> dict:
-    """Return the whole recorded run, or skip when nothing has been collected."""
-    if not RESULTS_PATH.exists():
+def run_dir() -> Path:
+    """Return the newest run directory, or skip when nothing has been collected.
+
+    Run directories are named after their UTC start time, so the newest one is
+    also the last in sorted order.
+    """
+    runs = sorted(path for path in RESULTS_DIR.glob("*") if path.is_dir())
+    if not runs:
         pytest.skip(
-            f"{RESULTS_PATH} not found; "
+            f"no runs found under {RESULTS_DIR}; "
             "run `uv run tests/e2e/exe_api_calls/main.py` first"
         )
-    return json.loads(RESULTS_PATH.read_text())
+    return runs[-1]
 
 
 @pytest.fixture(scope="session")
-def case(results: dict) -> Callable[[str], dict]:
-    """Return a lookup for a single recorded request/response by case name."""
+def case(run_dir: Path) -> Callable[[str, str], dict]:
+    """Return a lookup for one recorded request/response by endpoint and case."""
 
-    def _case(name: str) -> dict:
-        if name not in results["cases"]:
+    def _case(endpoint: str, name: str) -> dict:
+        result_path = run_dir / endpoint / name / "result.json"
+        if not result_path.exists():
             pytest.fail(
-                f"case {name!r} missing from {RESULTS_PATH}; "
-                "collect the results again to include it"
+                f"{result_path} not found; "
+                "collect the results again to include this case"
             )
-        return results["cases"][name]
+        return json.loads(result_path.read_text())
 
     return _case
