@@ -30,7 +30,7 @@ def case_names(endpoint: str) -> list[str]:
 def run_dir() -> Path:
     """Return the newest run directory, or skip when nothing has been collected.
 
-    Run directories are named after their UTC start time, so the newest one is
+    Run directories are named after their JST start time, so the newest one is
     also the last in sorted order.
     """
     runs = sorted(path for path in RESULTS_DIR.glob("*") if path.is_dir())
