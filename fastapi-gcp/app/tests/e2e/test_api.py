@@ -1,27 +1,16 @@
-"""End-to-end tests against the deployed service behind IAP."""
+"""End-to-end assertions over the responses recorded by exe_api_calls/main.py.
 
-import requests
-from conftest import SERVICE_URL
+These tests do no network I/O: run `uv run tests/e2e/exe_api_calls/main.py`
+first, then `pytest tests/e2e`. Without a results file the tests skip.
+"""
 
-
-def test_root(call):
-    response = call("GET", "/")
-    assert response.status_code == 200
-    assert response.json() == {"message": "Hello, FastAPI on GCP"}
+import pytest
+from conftest import case_names
 
 
-def test_health(call):
-    response = call("GET", "/health")
-    assert response.status_code == 200
-    assert response.json() == {"status": "ok"}
-
-
-def test_echo(call):
-    response = call("POST", "/echo", {"text": "hello"})
-    assert response.status_code == 200
-    assert response.json() == {"text": "hello"}
-
-
-def test_request_without_token_is_rejected():
-    response = requests.get(SERVICE_URL, timeout=30)
-    assert response.status_code in (401, 403)
+@pytest.mark.parametrize("name", case_names("echo"))
+def test_echo_returns_request_text(case, name):
+    echo = case(name)
+    assert echo["path"] == "/echo"
+    assert echo["status_code"] == 200
+    assert echo["json"] == {"text": echo["body"]["text"]}
