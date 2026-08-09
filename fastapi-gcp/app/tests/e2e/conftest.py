@@ -27,7 +27,7 @@ def signed_jwt() -> str:
     which signs the payload on behalf of the service account. This requires
     roles/iam.serviceAccountTokenCreator on that service account. IAP checks the
     iss/sub claims against roles/iap.httpsResourceAccessor, and the aud claim
-    against the URL of the protected resource.
+    against the requested URL.
     """
     credentials, _ = google.auth.default(
         scopes=["https://www.googleapis.com/auth/cloud-platform"]
@@ -36,7 +36,7 @@ def signed_jwt() -> str:
     payload = {
         "iss": SERVICE_ACCOUNT,
         "sub": SERVICE_ACCOUNT,
-        "aud": SERVICE_URL,
+        "aud": f"{SERVICE_URL}/*",
         "iat": now,
         "exp": now + 3600,
     }
