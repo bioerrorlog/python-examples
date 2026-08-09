@@ -26,6 +26,9 @@ resource "google_project_iam_member" "run_log_writer" {
 }
 
 resource "google_cloud_run_v2_service" "app" {
+  # iap_enabled is only available in the google-beta provider.
+  provider = google-beta
+
   project  = var.project_id
   name     = var.service_name
   location = var.region
