@@ -7,10 +7,12 @@ touching the network. Run it directly, not through pytest:
     uv run tests/e2e/exe_api_calls/main.py
 
 Request bodies live in data/, one directory per endpoint and one JSON file per
-case, e.g. data/echo/hello.json is POSTed to /echo. Its response is written to
-results/<run>/echo/hello/result.json, where <run> is the UTC start time of the
-run, so earlier runs are kept side by side. Adding a case means adding a file
-under data/, with no change to this script.
+case, e.g. data/echo/hello.json is POSTed to /echo. Each case gets its own
+directory under results/<run>/<endpoint>/<case>/, holding request.json (the body
+sent), response.json (the body received) and meta.json (everything else about
+the response). <run> is the UTC start time of the run, so earlier runs are kept
+side by side. Adding a case means adding a file under data/, with no change to
+this script.
 
 IAP on Cloud Run uses a Google-managed OAuth client, so the usual OIDC ID token
 flow is unavailable. IAP does accept a service account self-signed JWT whose
@@ -62,8 +64,8 @@ def sign_jwt() -> str:
     return response.json()["signedJwt"]
 
 
-def call(path: str, body: dict, token: str) -> dict:
-    """POST one request body and record the response.
+def call(path: str, body: dict, token: str) -> tuple[dict, dict]:
+    """POST one request body and return the response body and its metadata.
 
     IAP verifies the bearer token first and forwards the request to Cloud Run
     only when the service account is allowed to access the resource, so every
@@ -75,24 +77,33 @@ def call(path: str, body: dict, token: str) -> dict:
         json=body,
         timeout=30,
     )
-    return {
+    meta = {
+        "method": "POST",
         "path": path,
-        "body": body,
         "status_code": response.status_code,
-        "json": response.json(),
+        "elapsed_seconds": response.elapsed.total_seconds(),
+        "headers": dict(response.headers),
     }
+    return response.json(), meta
+
+
+def write_json(path: Path, data: dict) -> None:
+    """Write one JSON file, creating its directory if needed."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n")
 
 
 def main() -> None:
-    """POST every test data file to its endpoint and write one result file per case.
+    """POST every test data file to its endpoint and write three files per case.
 
     Input: data/<endpoint>/<case>.json, each holding a request body. The parent
     directory name is the endpoint, so data/echo/hello.json is POSTed to /echo.
 
-    Output: results/<run>/<endpoint>/<case>/result.json, where <run> is the UTC
-    start time of this run. Each file holds the request and the response on its
-    own, so a run is a directory tree mirroring data/. tests/e2e/test_api.py
-    reads the most recent run and verifies it.
+    Output: results/<run>/<endpoint>/<case>/, where <run> is the UTC start time
+    of this run, holding request.json (the body sent, a copy of the test data),
+    response.json (the body received) and meta.json (the service URL, the
+    timestamp, and the response information other than the body).
+    tests/e2e/test_api.py reads the most recent run and verifies it.
     """
     token = sign_jwt()
 
@@ -105,18 +116,21 @@ def main() -> None:
     for testdata_path in testdata_paths:
         endpoint = testdata_path.parent.name
         case = testdata_path.stem
-        result = {
-            "service_url": SERVICE_URL,
-            "collected_at": started_at.isoformat(),
-            **call(f"/{endpoint}", json.loads(testdata_path.read_text()), token),
-        }
+        request_body = json.loads(testdata_path.read_text())
+        response_body, meta = call(f"/{endpoint}", request_body, token)
 
-        result_path = run_dir / endpoint / case / "result.json"
-        result_path.parent.mkdir(parents=True, exist_ok=True)
-        result_path.write_text(
-            json.dumps(result, indent=2, ensure_ascii=False) + "\n"
+        case_dir = run_dir / endpoint / case
+        write_json(case_dir / "request.json", request_body)
+        write_json(case_dir / "response.json", response_body)
+        write_json(
+            case_dir / "meta.json",
+            {
+                "service_url": SERVICE_URL,
+                "collected_at": started_at.isoformat(),
+                **meta,
+            },
         )
-        print(f"{endpoint}/{case}: POST /{endpoint} -> {result['status_code']}")
+        print(f"{endpoint}/{case}: POST /{endpoint} -> {meta['status_code']}")
 
     print(f"wrote {len(testdata_paths)} results under {run_dir}")
 

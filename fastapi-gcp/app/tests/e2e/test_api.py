@@ -11,6 +11,6 @@ from conftest import case_names
 @pytest.mark.parametrize("name", case_names("echo"))
 def test_echo_returns_request_text(case, name):
     echo = case("echo", name)
-    assert echo["path"] == "/echo"
-    assert echo["status_code"] == 200
-    assert echo["json"] == {"text": echo["body"]["text"]}
+    assert echo["meta"]["path"] == "/echo"
+    assert echo["meta"]["status_code"] == 200
+    assert echo["response"] == {"text": echo["request"]["text"]}

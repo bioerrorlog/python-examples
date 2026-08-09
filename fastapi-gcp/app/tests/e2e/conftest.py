@@ -44,15 +44,23 @@ def run_dir() -> Path:
 
 @pytest.fixture(scope="session")
 def case(run_dir: Path) -> Callable[[str, str], dict]:
-    """Return a lookup for one recorded request/response by endpoint and case."""
+    """Return a lookup for one recorded case by endpoint and case name.
+
+    The three files the case was recorded as are returned under the keys
+    "request", "response" and "meta".
+    """
 
     def _case(endpoint: str, name: str) -> dict:
-        result_path = run_dir / endpoint / name / "result.json"
-        if not result_path.exists():
-            pytest.fail(
-                f"{result_path} not found; "
-                "collect the results again to include this case"
-            )
-        return json.loads(result_path.read_text())
+        case_dir = run_dir / endpoint / name
+        recorded = {}
+        for part in ("request", "response", "meta"):
+            path = case_dir / f"{part}.json"
+            if not path.exists():
+                pytest.fail(
+                    f"{path} not found; "
+                    "collect the results again to include this case"
+                )
+            recorded[part] = json.loads(path.read_text())
+        return recorded
 
     return _case
