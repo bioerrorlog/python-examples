@@ -41,6 +41,13 @@ resource "google_cloud_run_v2_service" "app" {
 
   iap_enabled = true
 
+  # Service-level scaling (distinct from template.scaling). The API always
+  # returns this block, so declaring it keeps plan from showing a permanent diff.
+  scaling {
+    min_instance_count    = 0
+    manual_instance_count = 0
+  }
+
   template {
     service_account = google_service_account.run.email
 
