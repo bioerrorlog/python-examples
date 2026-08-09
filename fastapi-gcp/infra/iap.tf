@@ -19,14 +19,16 @@ resource "google_cloud_run_v2_service_iam_member" "iap_invoker" {
 }
 
 # Google accounts allowed to pass the IAP sign-in screen.
-resource "google_cloud_run_v2_service_iam_member" "iap_accessor" {
+# This role binds on the IAP resource, not on the Cloud Run service itself:
+# the Cloud Run IAM API rejects roles/iap.httpsResourceAccessor.
+resource "google_iap_web_cloud_run_service_iam_member" "iap_accessor" {
   for_each = toset(var.iap_members)
 
-  project  = var.project_id
-  location = google_cloud_run_v2_service.app.location
-  name     = google_cloud_run_v2_service.app.name
-  role     = "roles/iap.httpsResourceAccessor"
-  member   = each.value
+  project                = var.project_id
+  location               = google_cloud_run_v2_service.app.location
+  cloud_run_service_name = google_cloud_run_v2_service.app.name
+  role                   = "roles/iap.httpsResourceAccessor"
+  member                 = each.value
 }
 
 # Identity used to call the service programmatically.
@@ -36,12 +38,12 @@ resource "google_service_account" "client" {
   display_name = "Programmatic client for ${var.service_name}"
 }
 
-resource "google_cloud_run_v2_service_iam_member" "client_iap_accessor" {
-  project  = var.project_id
-  location = google_cloud_run_v2_service.app.location
-  name     = google_cloud_run_v2_service.app.name
-  role     = "roles/iap.httpsResourceAccessor"
-  member   = "serviceAccount:${google_service_account.client.email}"
+resource "google_iap_web_cloud_run_service_iam_member" "client_iap_accessor" {
+  project                = var.project_id
+  location               = google_cloud_run_v2_service.app.location
+  cloud_run_service_name = google_cloud_run_v2_service.app.name
+  role                   = "roles/iap.httpsResourceAccessor"
+  member                 = "serviceAccount:${google_service_account.client.email}"
 }
 
 # Principals allowed to impersonate the client service account and sign JWTs as it.
