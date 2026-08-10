@@ -116,7 +116,7 @@ async def run_case(
     endpoint = testdata_path.parent.name
     case = testdata_path.stem
     request_body = json.loads(testdata_path.read_text())
-    print(f"Request:  {endpoint}/{case}: POST /{endpoint}", flush=True)
+    print(f"Request:  POST /{endpoint} (case: {case})", flush=True)
     response_body, meta = await call(client, f"/{endpoint}", request_body, token)
 
     case_dir = run_dir / endpoint / case
@@ -131,7 +131,7 @@ async def run_case(
         },
     )
     print(
-        f"Response: {endpoint}/{case}: {meta['status_code']}"
+        f"Response: POST /{endpoint} (case: {case}) returned {meta['status_code']}"
         f" in {meta['elapsed_seconds']:.1f}s",
         flush=True,
     )
@@ -175,10 +175,13 @@ async def main() -> None:
         if isinstance(result, BaseException)
     ]
     for path, error in failures:
-        print(f"Response {path.parent.name}/{path.stem}: failed: {error!r}")
+        print(
+            f"Response: POST /{path.parent.name} (case: {path.stem})"
+            f" failed: {error!r}"
+        )
 
     written = len(testdata_paths) - len(failures)
-    print(f"wrote {written} results under {run_dir}")
+    print(f"wrote {written}/{len(testdata_paths)} results under {run_dir}")
     if failures:
         raise SystemExit(f"{len(failures)} of {len(testdata_paths)} cases failed")
 
