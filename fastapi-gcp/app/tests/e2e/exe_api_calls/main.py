@@ -107,10 +107,16 @@ async def run_case(
     run_dir: Path,
     started_at: datetime,
 ) -> None:
-    """POST one test data file and write the three result files for that case."""
+    """POST one test data file and write the three result files for that case.
+
+    Two lines are printed per case, one when the request goes out and one when
+    the response comes back, so a slow case is visible while it is still in
+    flight. The lines of different cases interleave.
+    """
     endpoint = testdata_path.parent.name
     case = testdata_path.stem
     request_body = json.loads(testdata_path.read_text())
+    print(f"--> {endpoint}/{case}: POST /{endpoint}", flush=True)
     response_body, meta = await call(client, f"/{endpoint}", request_body, token)
 
     case_dir = run_dir / endpoint / case
@@ -124,7 +130,11 @@ async def run_case(
             **meta,
         },
     )
-    print(f"{endpoint}/{case}: POST /{endpoint} -> {meta['status_code']}")
+    print(
+        f"<-- {endpoint}/{case}: {meta['status_code']}"
+        f" in {meta['elapsed_seconds']:.1f}s",
+        flush=True,
+    )
 
 
 async def main() -> None:
@@ -165,7 +175,7 @@ async def main() -> None:
         if isinstance(result, BaseException)
     ]
     for path, error in failures:
-        print(f"{path.parent.name}/{path.stem}: failed: {error!r}")
+        print(f"<-- {path.parent.name}/{path.stem}: failed: {error!r}")
 
     written = len(testdata_paths) - len(failures)
     print(f"wrote {written} results under {run_dir}")
