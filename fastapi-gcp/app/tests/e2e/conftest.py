@@ -22,6 +22,17 @@ _result_dirs = sorted(path for path in RESULTS_DIR.glob("*") if path.is_dir())
 LATEST_RESULT_DIR = _result_dirs[-1] if _result_dirs else None
 
 
+def pytest_report_header() -> str:
+    """Print the result directory the tests are about, in the pytest header.
+
+    A plain print at import time is swallowed by pytest's output capture unless
+    -s is given, while the header is always shown.
+    """
+    if LATEST_RESULT_DIR is None:
+        return f"e2e results: nothing collected under {RESULTS_DIR}"
+    return f"e2e results: {LATEST_RESULT_DIR}"
+
+
 def case_names(endpoint: str) -> list[str]:
     """Return an endpoint's case names as recorded by the newest run.
 
