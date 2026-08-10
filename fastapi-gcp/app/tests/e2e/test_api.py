@@ -2,8 +2,10 @@
 
 These tests do no network I/O: run `uv run tests/e2e/exe_api_calls/main.py`
 first, then `pytest tests/e2e`. Without a collected run the tests skip.
-"""
 
+The cases are taken from the newest run under exe_api_calls/results/, so the
+tests describe that run and nothing else.
+"""
 import pytest
 from conftest import case_names
 
