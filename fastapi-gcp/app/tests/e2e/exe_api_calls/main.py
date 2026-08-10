@@ -89,7 +89,7 @@ async def call(
         "path": path,
         "status_code": response.status_code,
         "elapsed_seconds": response.elapsed.total_seconds(),
-        "headers": dict(response.headers),
+        "response_headers": dict(response.headers),
     }
     return response.json(), meta
 
