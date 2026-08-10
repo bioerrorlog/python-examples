@@ -14,19 +14,24 @@ the response). <run> is the UTC start time of the run, so earlier runs are kept
 side by side. Adding a case means adding a file under data/, with no change to
 this script.
 
+Some endpoints are slow, so all cases are called concurrently and the run takes
+about as long as its slowest case. Each result is written as its response
+arrives, so the printed order is completion order, not data/ order.
+
 IAP on Cloud Run uses a Google-managed OAuth client, so the usual OIDC ID token
 flow is unavailable. IAP does accept a service account self-signed JWT whose
 audience is the service URL. The JWT is signed through the IAM Credentials API
 with the local user's credentials, so no service account key is needed.
 """
 
+import asyncio
 import json
 import time
 from datetime import datetime, timezone
 from pathlib import Path
 
 import google.auth
-import requests
+import httpx
 from google.auth.transport.requests import AuthorizedSession
 
 
@@ -34,6 +39,7 @@ SERVICE_URL = "https://fastapi-gcp-xxxxxxxxxx.asia-northeast1.run.app"
 SERVICE_ACCOUNT = "fastapi-gcp-client@your-gcp-project-id.iam.gserviceaccount.com"
 DATA_DIR = Path(__file__).parent / "data"
 RESULTS_DIR = Path(__file__).parent / "results"
+TIMEOUT_SECONDS = 30
 
 
 def sign_jwt() -> str:
@@ -64,18 +70,19 @@ def sign_jwt() -> str:
     return response.json()["signedJwt"]
 
 
-def call(path: str, body: dict, token: str) -> tuple[dict, dict]:
+async def call(
+    client: httpx.AsyncClient, path: str, body: dict, token: str
+) -> tuple[dict, dict]:
     """POST one request body and return the response body and its metadata.
 
     IAP verifies the bearer token first and forwards the request to Cloud Run
     only when the service account is allowed to access the resource, so every
     response recorded here comes from the service itself.
     """
-    response = requests.post(
+    response = await client.post(
         f"{SERVICE_URL}{path}",
         headers={"Authorization": f"Bearer {token}"},
         json=body,
-        timeout=30,
     )
     meta = {
         "method": "POST",
@@ -93,7 +100,34 @@ def write_json(path: Path, data: dict) -> None:
     path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n")
 
 
-def main() -> None:
+async def run_case(
+    client: httpx.AsyncClient,
+    testdata_path: Path,
+    token: str,
+    run_dir: Path,
+    started_at: datetime,
+) -> None:
+    """POST one test data file and write the three result files for that case."""
+    endpoint = testdata_path.parent.name
+    case = testdata_path.stem
+    request_body = json.loads(testdata_path.read_text())
+    response_body, meta = await call(client, f"/{endpoint}", request_body, token)
+
+    case_dir = run_dir / endpoint / case
+    write_json(case_dir / "request.json", request_body)
+    write_json(case_dir / "response.json", response_body)
+    write_json(
+        case_dir / "meta.json",
+        {
+            "service_url": SERVICE_URL,
+            "collected_at": started_at.isoformat(),
+            **meta,
+        },
+    )
+    print(f"{endpoint}/{case}: POST /{endpoint} -> {meta['status_code']}")
+
+
+async def main() -> None:
     """POST every test data file to its endpoint and write three files per case.
 
     Input: data/<endpoint>/<case>.json, each holding a request body. The parent
@@ -104,6 +138,9 @@ def main() -> None:
     response.json (the body received) and meta.json (the service URL, the
     timestamp, and the response information other than the body).
     tests/e2e/test_api.py reads the most recent run and verifies it.
+
+    All cases are in flight at once. One failing case does not cancel the
+    others: the exceptions are collected and reported once every call is done.
     """
     token = sign_jwt()
 
@@ -113,27 +150,28 @@ def main() -> None:
 
     started_at = datetime.now(timezone.utc)
     run_dir = RESULTS_DIR / started_at.strftime("%Y%m%dT%H%M%SZ")
-    for testdata_path in testdata_paths:
-        endpoint = testdata_path.parent.name
-        case = testdata_path.stem
-        request_body = json.loads(testdata_path.read_text())
-        response_body, meta = call(f"/{endpoint}", request_body, token)
-
-        case_dir = run_dir / endpoint / case
-        write_json(case_dir / "request.json", request_body)
-        write_json(case_dir / "response.json", response_body)
-        write_json(
-            case_dir / "meta.json",
-            {
-                "service_url": SERVICE_URL,
-                "collected_at": started_at.isoformat(),
-                **meta,
-            },
+    async with httpx.AsyncClient(timeout=TIMEOUT_SECONDS) as client:
+        results = await asyncio.gather(
+            *(
+                run_case(client, testdata_path, token, run_dir, started_at)
+                for testdata_path in testdata_paths
+            ),
+            return_exceptions=True,
         )
-        print(f"{endpoint}/{case}: POST /{endpoint} -> {meta['status_code']}")
 
-    print(f"wrote {len(testdata_paths)} results under {run_dir}")
+    failures = [
+        (path, result)
+        for path, result in zip(testdata_paths, results)
+        if isinstance(result, BaseException)
+    ]
+    for path, error in failures:
+        print(f"{path.parent.name}/{path.stem}: failed: {error!r}")
+
+    written = len(testdata_paths) - len(failures)
+    print(f"wrote {written} results under {run_dir}")
+    if failures:
+        raise SystemExit(f"{len(failures)} of {len(testdata_paths)} cases failed")
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
