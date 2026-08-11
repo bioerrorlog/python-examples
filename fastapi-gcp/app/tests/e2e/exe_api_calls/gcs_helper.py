@@ -21,7 +21,15 @@ def sync_data_from_gcs(local_data_dir: Path) -> None:
     deleted, so local_data_dir should not be edited by hand.
     """
     subprocess.run(
-        ["gsutil", "-m", "rsync", "-r", "-d", DATA_GCS_URI, str(local_data_dir)],
+        [
+            "gcloud",
+            "storage",
+            "rsync",
+            DATA_GCS_URI,
+            str(local_data_dir),
+            "--recursive",
+            "--delete-unmatched-destination-objects",
+        ],
         check=True,
     )
 
@@ -29,6 +37,13 @@ def sync_data_from_gcs(local_data_dir: Path) -> None:
 def upload_results_to_gcs(local_results_run_dir: Path) -> None:
     """Upload one run's results directory to Cloud Storage."""
     subprocess.run(
-        ["gsutil", "-m", "cp", "-r", str(local_results_run_dir), f"{RESULTS_GCS_URI}/"],
+        [
+            "gcloud",
+            "storage",
+            "cp",
+            str(local_results_run_dir),
+            f"{RESULTS_GCS_URI}/",
+            "--recursive",
+        ],
         check=True,
     )
