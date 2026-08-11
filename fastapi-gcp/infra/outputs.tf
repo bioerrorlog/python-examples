@@ -27,3 +27,8 @@ output "iap_service_agent" {
   description = "IAP service agent that invokes the Cloud Run service"
   value       = google_project_service_identity.iap.email
 }
+
+output "storage_bucket" {
+  description = "Cloud Storage bucket name"
+  value       = google_storage_bucket.app.name
+}
