@@ -89,4 +89,12 @@ resource "google_cloud_run_v2_service" "app" {
   }
 
   depends_on = [google_project_service.this]
+
+  # Deploy with gcloud
+  lifecycle {
+    ignore_changes = [
+      client,
+      client_version,
+    ]
+  }
 }
