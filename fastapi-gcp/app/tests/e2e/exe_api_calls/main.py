@@ -26,6 +26,7 @@ with the local user's credentials, so no service account key is needed.
 
 import asyncio
 import json
+import os
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -35,8 +36,14 @@ import httpx
 from google.auth.transport.requests import AuthorizedSession
 
 
-SERVICE_URL = "https://fastapi-gcp-xxxxxxxxxx.asia-northeast1.run.app"
-SERVICE_ACCOUNT = "fastapi-gcp-client@your-gcp-project-id.iam.gserviceaccount.com"
+SERVICE_URL = os.environ.get(
+    "SERVICE_URL",
+    "https://fastapi-gcp-xxxxxxxxxx.asia-northeast1.run.app",
+)
+SERVICE_ACCOUNT = os.environ.get(
+    "SERVICE_ACCOUNT",
+    "fastapi-gcp-client@your-gcp-project-id.iam.gserviceaccount.com",
+)
 DATA_DIR = Path(__file__).parent / "data"
 RESULTS_DIR = Path(__file__).parent / "results"
 TIMEOUT_SECONDS = 30
@@ -91,7 +98,14 @@ async def call(
         "elapsed_seconds": response.elapsed.total_seconds(),
         "response_headers": dict(response.headers),
     }
-    return response.json(), meta
+    try:
+        response_body = response.json()
+    except json.JSONDecodeError as e:
+        raise RuntimeError(
+            f"{path} returned {response.status_code} in"
+            f" {meta['elapsed_seconds']:.1f}s with unparseable body {response.text!r}"
+        ) from e
+    return response_body, meta
 
 
 def write_json(path: Path, data: dict) -> None:
