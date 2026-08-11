@@ -1,3 +1,7 @@
+# e2e API call results, written by app/tests/e2e/exe_api_calls/main.py
+app/tests/e2e/exe_api_calls/data/
+app/tests/e2e/exe_api_calls/results/
+
 # Local .terraform directories
 .terraform/
 
@@ -263,6 +267,3 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
-
-# e2e API call results, written by app/tests/e2e/exe_api_calls/main.py
-app/tests/e2e/exe_api_calls/results/

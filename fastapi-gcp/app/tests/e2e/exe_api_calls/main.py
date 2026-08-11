@@ -172,6 +172,9 @@ async def main() -> None:
     All cases are in flight at once. One failing case does not cancel the
     others: the exceptions are collected and reported once every call is done.
     """
+    LOCAL_DATA_DIR.mkdir(parents=True, exist_ok=True)
+    LOCAL_RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+
     sync_data_from_gcs(LOCAL_DATA_DIR)
 
     token = sign_jwt()
