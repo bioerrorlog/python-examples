@@ -14,6 +14,10 @@ the response). <run> is the UTC start time of the run, so earlier runs are kept
 side by side. Adding a case means adding a file under data/, with no change to
 this script.
 
+Before each run, data/ is mirrored from DATA_GCS_URI in Cloud Storage (a
+one-way sync, so local edits under data/ are overwritten). After the run,
+the new results/<run>/ directory is uploaded to RESULTS_GCS_URI.
+
 Some endpoints are slow, so all cases are called concurrently and the run takes
 about as long as its slowest case. Each result is written as its response
 arrives, so the printed order is completion order, not data/ order.
@@ -35,6 +39,8 @@ import google.auth
 import httpx
 from google.auth.transport.requests import AuthorizedSession
 
+from gcs_helper import sync_data_from_gcs, upload_results_to_gcs
+
 
 SERVICE_URL = os.environ.get(
     "SERVICE_URL",
@@ -44,8 +50,8 @@ SERVICE_ACCOUNT = os.environ.get(
     "SERVICE_ACCOUNT",
     "fastapi-gcp-client@your-gcp-project-id.iam.gserviceaccount.com",
 )
-DATA_DIR = Path(__file__).parent / "data"
-RESULTS_DIR = Path(__file__).parent / "results"
+LOCAL_DATA_DIR = Path(__file__).parent / "data"
+LOCAL_RESULTS_DIR = Path(__file__).parent / "results"
 TIMEOUT_SECONDS = 30
 
 
@@ -166,14 +172,16 @@ async def main() -> None:
     All cases are in flight at once. One failing case does not cancel the
     others: the exceptions are collected and reported once every call is done.
     """
+    sync_data_from_gcs(LOCAL_DATA_DIR)
+
     token = sign_jwt()
 
-    testdata_paths = sorted(DATA_DIR.glob("*/*.json"))
+    testdata_paths = sorted(LOCAL_DATA_DIR.glob("*/*.json"))
     if not testdata_paths:
-        raise SystemExit(f"no test data found in {DATA_DIR}")
+        raise SystemExit(f"no test data found in {LOCAL_DATA_DIR}")
 
     started_at = datetime.now(timezone.utc)
-    run_dir = RESULTS_DIR / started_at.strftime("%Y%m%dT%H%M%SZ")
+    run_dir = LOCAL_RESULTS_DIR / started_at.strftime("%Y%m%dT%H%M%SZ")
     async with httpx.AsyncClient(timeout=TIMEOUT_SECONDS) as client:
         results = await asyncio.gather(
             *(
@@ -196,6 +204,9 @@ async def main() -> None:
 
     written = len(testdata_paths) - len(failures)
     print(f"wrote {written}/{len(testdata_paths)} results under {run_dir}")
+
+    upload_results_to_gcs(run_dir)
+
     if failures:
         raise SystemExit(f"{len(failures)} of {len(testdata_paths)} cases failed")
 
